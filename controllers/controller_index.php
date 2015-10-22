@@ -2,6 +2,9 @@
 
 use PhangoApp\PhaRouter\Controller;
 use PhangoApp\PhaUtils\Utils;
+use Chorizon\Arn\Config;
+
+ini_set('html_errors', false);
 
 define('ERROR_IP', 1);
 
@@ -31,6 +34,8 @@ class indexController extends Controller {
             $arr_result=array('task_id' => $_GET['task_id'], 'MESSAGE' => "Error, IP ".Utils::form_text($_GET['ip'])." invalid", 'ERROR' => 1, 'CODE_ERROR' => ERROR_IP, 'PROGRESS' => 100);
         
         }
+        
+        $ip=$_GET['ip'];
         
         settype($_GET['ssh_port'], 'integer');
         
@@ -69,12 +74,16 @@ class indexController extends Controller {
             
                 //Basic config
                 
-                $settings['private_key']='';
+                Config::$settings['private_key']='';
                 
-                $settings['password']='';
+                Config::$settings['password']='';
+                
+                Config::$settings['user_ssh']='';
             
                 //Make connection ssh
-                Utils::load_config('config_pastafari', './settings');
+                Utils::load_config('config_arn');
+                
+                $file_key=Config::$settings['private_key'];
                 
                 //Prepare ssh key
                 
@@ -84,27 +93,25 @@ class indexController extends Controller {
                     
                     $yes_password=1;
                     
-                    $key->setPassword($settings['password']);
-                    
-                    if(!($file_key=file_get_contents($settings['private_key'])))
-                    {
-                        
-                        $yes_password=0;
-                        
-                        $arr_result=array('task_id' => $_GET['task_id'], 'MESSAGE' => "Error in authentication...", 'ERROR' => 1, 'CODE_ERROR' => ERROR_SECRET_KEY, 'PROGRESS' => 100);
-                    
-                    }
-                    
+                    $key->setPassword(Config::$settings['password']);
                     
                     if(file_exists($file_key))
                     {
-                    
-                        if(!$key->loadKey($file_key))
+                        
+                        if(!($file_key=file_get_contents(Config::$settings['private_key'])))
+                        {
+                            
+                            $yes_password=0;
+                            
+                            $arr_result=array('task_id' => $_GET['task_id'], 'MESSAGE' => "Error in authentication...", 'ERROR' => 1, 'CODE_ERROR' => ERROR_SECRET_KEY, 'PROGRESS' => 100);
+                        
+                        }
+                        elseif(!$key->loadKey($file_key))
                         {
                         
                             $yes_password=0;
                         
-                            $arr_result=array('task_id' => $_GET['task_id'], 'MESSAGE' => "Error in authentication...", 'ERROR' => 1, 'CODE_ERROR' => ERROR_SECRET_KEY, 'PROGRESS' => 100);
+                            $arr_result=array('task_id' => $_GET['task_id'], 'MESSAGE' => "Error in authentication password...", 'ERROR' => 1, 'CODE_ERROR' => ERROR_SECRET_KEY, 'PROGRESS' => 100);
                             
                         }
                     
@@ -118,16 +125,41 @@ class indexController extends Controller {
                     
                     }
                     
+                    //Declare ssh
+                    
+                    $ssh = new \phpseclib\Net\SSH2($ip);
+                    
+                    ob_start();
+                    
+                    if (!$ssh->login(Config::$settings['user_ssh'], $key)) {
+                    
+                        $error=ob_get_contents();
+    
+                        $arr_result=array('task_id' => $_GET['task_id'], 'MESSAGE' => "Error login in server...:".$error, 'ERROR' => 1, 'CODE_ERROR' => ERROR_SECRET_KEY, 'PROGRESS' => 100);
+                    
+                        $yes_password=0;
+                    }
+                    
+                    ob_end_clean();
+                    
+                    $command='python3 virus/load_script.py --category '.$_GET['category'].' --module '.$_GET['module'].' --script '.$_GET['script'];
+                    
                     if($yes_password===1)
                     {
                     
+                        if(!$ssh->exec($command, 'packet_handler'))
+                        {
                         
+                            $arr_result=array('task_id' => $_GET['task_id'], 'MESSAGE' => "Error executing command...", 'ERROR' => 1, 'CODE_ERROR' => ERROR_SECRET_KEY, 'PROGRESS' => 100);
+                        
+                        }
                     
                     }
                 
                 }
                 catch(Exception $e) {
-                
+                    
+                    $arr_result=array('task_id' => $_GET['task_id'], 'MESSAGE' => "Error in authentication...", 'ERROR' => 1, 'CODE_ERROR' => ERROR_SECRET_KEY, 'PROGRESS' => 100);
             
                 }
             }
@@ -150,6 +182,14 @@ class indexController extends Controller {
     
     }
 
+}
+
+function packet_handler($str)
+{
+    
+    echo $str."\n";
+    
+    
 }
 
 ?>
