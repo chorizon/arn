@@ -62,15 +62,74 @@ class indexController extends Controller {
         
         if($final_secret_key===SECRET_KEY_HASHED_WITH_PASS)
         {
-        
-            Utils::load_config('config_pastafari', './settings');
+           
         
             if($send_process===1)
             {
             
+                //Basic config
+                
+                $settings['private_key']='';
+                
+                $settings['password']='';
+            
                 //Make connection ssh
+                Utils::load_config('config_pastafari', './settings');
+                
+                //Prepare ssh key
+                
+                $key = new \phpseclib\Crypt\RSA();
+                
+                try {
+                    
+                    $yes_password=1;
+                    
+                    $key->setPassword($settings['password']);
+                    
+                    if(!($file_key=file_get_contents($settings['private_key'])))
+                    {
+                        
+                        $yes_password=0;
+                        
+                        $arr_result=array('task_id' => $_GET['task_id'], 'MESSAGE' => "Error in authentication...", 'ERROR' => 1, 'CODE_ERROR' => ERROR_SECRET_KEY, 'PROGRESS' => 100);
+                    
+                    }
+                    
+                    
+                    if(file_exists($file_key))
+                    {
+                    
+                        if(!$key->loadKey($file_key))
+                        {
+                        
+                            $yes_password=0;
+                        
+                            $arr_result=array('task_id' => $_GET['task_id'], 'MESSAGE' => "Error in authentication...", 'ERROR' => 1, 'CODE_ERROR' => ERROR_SECRET_KEY, 'PROGRESS' => 100);
+                            
+                        }
+                    
+                    }
+                    else
+                    {
+                    
+                        $yes_password=0;
+                        
+                        $arr_result=array('task_id' => $_GET['task_id'], 'MESSAGE' => "Error in authentication...", 'ERROR' => 1, 'CODE_ERROR' => ERROR_SECRET_KEY, 'PROGRESS' => 100);
+                    
+                    }
+                    
+                    if($yes_password===1)
+                    {
+                    
+                        
+                    
+                    }
+                
+                }
+                catch(Exception $e) {
                 
             
+                }
             }
             
         }
