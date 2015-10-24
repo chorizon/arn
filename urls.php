@@ -6,4 +6,6 @@ use PhangoApp\PhaRouter\Routes;
 
 Routes::$urls['arn\/([^\/]*)$']=array('index', 'home');
 
+Routes::$urls['arn\/check_process\/([^\/]*)\/([^\/]*)$']=array('index', 'check_process');
+
 ?>
