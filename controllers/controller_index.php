@@ -109,12 +109,12 @@ class indexController extends Controller {
                 
                 foreach($_GET as $key => $value)
                 {
-                
+                    $value=trim($value);
                     $arr_params[]='--'.Utils::slugify($key).' '.strtr($value,'/"`', '---');
                 
                 }
                 
-                $command='python3 virus/load_script.py --category '.$category.' --module '.$module.' --script '.$script.' --params "'.implode('', $arr_params).'"';
+                $command='python3 virus/load_script.py --category '.$category.' --module '.$module.' --script '.$script.' --params "'.implode(' ', $arr_params).'"';
                 
                 exec_ssh($ip, 22, $command);
             }
@@ -195,7 +195,7 @@ function packet_handler($str)
     if($arr_result==false)
     {
     
-        $arr_result=array('MESSAGE' => "The server send an message that cannot understand ".$arr_result, 'ERROR' => 1, 'CODE_ERROR' => ERROR_SECRET_KEY, 'PROGRESS' => 100);
+        $arr_result=array('MESSAGE' => "The server send a message that cannot understand: ".strip_tags($str), 'ERROR' => 1, 'CODE_ERROR' => ERROR_SECRET_KEY, 'PROGRESS' => 100);
     
     }
     
