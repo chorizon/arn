@@ -150,6 +150,7 @@ class indexController extends Controller {
         {
         
             settype($_GET['ip'], 'string');
+            settype($_GET['num_line'], 'integer');
         
             $send_process=1;
         
@@ -167,7 +168,7 @@ class indexController extends Controller {
                 
                 $ip=$_GET['ip'];
                 
-                $command='python3 virus/info_log.py --uuid '.Utils::form_text($uuid);
+                $command='python3 virus/info_log.py --uuid '.Utils::form_text($uuid).' --num_line '.$_GET['num_line'];
                 
                 exec_ssh($ip, 22, $command);
             
